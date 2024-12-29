@@ -3,12 +3,20 @@ const favoriteMongo = require("../../dao/favorites/favorites.mongo.dao")
 const { responseBody } = require("../../util/responseBody")
 
 exports.getFavorites = async (req, res) => {
-    const { category, limit = 10, offset = 0 } = req.query
-    const result = await favoriteMongo.getFavorites(category, limit, offset)
-    if (!result.success) {
-        return res.status(404).send(responseBody(404, null, "Resource Doesn't Exist", null))
+    try {
+        const { category } = req.params
+        if (!category) {
+            throw new Error("Bad Request")
+        }
+        const { limit = 10, offset = 0 } = req.query
+        const result = await favoriteMongo.getFavorites(category, limit, offset)
+        if (!result.success) {
+            return res.status(404).send(responseBody(404, null, "Resource Doesn't Exist", null))
+        }
+        res.status(200).send(responseBody(200, result?.data, "Favorites retrieved Successfully", null))
+    } catch (err) {
+        res.status(401).send(responseBody(401, null, err.message, null))
     }
-    res.status(200).send(responseBody(200, result?.data, "Favorites retrieved Successfully", null))
 }
 exports.addFavorites = async (req, res) => {
     try {
@@ -25,10 +33,17 @@ exports.addFavorites = async (req, res) => {
 
 
 exports.deleteFavorite = async (req, res) => {
-    const favorite_id = req.params.favorite_id
-    const result = await favoriteMongo.deleteFavorites(favorite_id)
-    if (!result.success) {
-        res.status(404).send(responseBody(404, null, "Resource Doesn't Exist", null))
+    try {
+        const { favorite_id } = req.params
+        if (!favorite_id) {
+            throw new Error("Bad Request")
+        }
+        const result = await favoriteMongo.deleteFavorites(favorite_id)
+        if (!result.success) {
+            res.status(404).send(responseBody(404, null, "Resource Doesn't Exist", null))
+        }
+        return res.status(200).send(responseBody(200, null, "Favorite Removed Successfully", null))
+    } catch (err) {
+        res.status(401).send(responseBody(401, null, err.message, null))
     }
-    return res.status(200).send(responseBody(200, null, "Favorite Removed Successfully", null))
 }

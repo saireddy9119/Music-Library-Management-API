@@ -8,10 +8,10 @@ exports.getArtists = async (req, res) => {
         const { limit = 10, offset = 0, grammy, hidden } = req.query
         const result = await ArtistMongo.getArtists(limit, offset, grammy, hidden)
         if (result.success) {
-            res.staus(200).send(responseBody(200, result.data, "Artists Retrieved Successfully"))
+            return res.status(200).send(responseBody(200, result.data, "Artists Retrieved Successfully", null))
         }
     } catch (err) {
-        res.status(400).send(responseBody(400, null, "Bad Request", null))
+        res.status(400).send(responseBody(400, null, err.message, null))
     }
 }
 
@@ -51,7 +51,8 @@ exports.updateArtist = async (req, res) => {
         if (!artist_id) {
             throw new Error("Bad Request")
         }
-        const result = await ArtistMongo.updateArtist(artist_id, req.body)
+        const updates = { ...req.body }
+        const result = await ArtistMongo.updateArtist(artist_id, updates)
         if (result.success) {
             return res.status(204).send(responseBody(204, null, "Artist Updated Successfully", null))
         } else {
@@ -76,6 +77,6 @@ exports.deleteArtist = async (req, res) => {
             return res.status(404).send(responseBody(404, null, "Artist Not Found", null))
         }
     } catch (err) {
-        return res.status(400).send(responseBody(400, null, "Bad Request", null))
+        return res.status(400).send(responseBody(400, null, err.message, null))
     }
 }

@@ -12,7 +12,7 @@ exports.getTracks = async (req, res) => {
 }
 exports.getTrack = async (req, res) => {
     try {
-        const { track_id } = req.query
+        const { track_id } = req.params
         const result = await TrackMongo.getTrack(track_id)
         if (!result.success) {
             return res.status(404).send(responseBody(404, null, "Resource Doesn't Exist", null))
@@ -40,8 +40,9 @@ exports.addTrack = async (req, res) => {
 
 exports.updateTracks = async (req, res) => {
 
-    const { track_id } = req.query
-    const result = await TrackMongo.updateTracks(track_id, req.body)
+    const { track_id } = req.params
+    const updated = { ...req.body }
+    const result = await TrackMongo.updateTracks(track_id, updated)
     if (!result.success) {
         return res.status(404).send(responseBody(404, null, "Resource Doesn't Exists", null))
     }
@@ -49,7 +50,7 @@ exports.updateTracks = async (req, res) => {
 }
 
 exports.deleteTrack = async (req, res) => {
-    const { track_id } = req.query
+    const { track_id } = req.params
     const result = await TrackMongo.deleteTracks(track_id)
     if (!result.success) {
         return res.status(404).send(responseBody(404, null, "Resource Doesn't Exist", null))

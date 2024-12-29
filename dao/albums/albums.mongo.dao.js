@@ -8,16 +8,15 @@ exports.getAlbums = async (limit, offset, artist_id, hidden) => {
     const query = {};
     if (artist_id) query.artist_id = artist_id;
     if (hidden !== undefined) query.hidden = hidden === "true";
-    const albums = await Album.find(query).skip(parseInt(offset)).limit(parseInt(limit)).lean();
+    const albums = await Album.find(query).select('-_id -__v -updatedAt').skip(parseInt(offset)).limit(parseInt(limit)).lean();
     return { success: true, data: albums }
 }
 exports.getAlbum = async (album_id) => {
-    const findAlbum = await Album.findOne({ album_id }).select('-_id')
+    const findAlbum = await Album.findOne({ album_id }).select('-_id -__v -updatedAt').lean()
     if (!findAlbum) {
         return { success: false }
     }
-    const extractedAlbum = findAlbum.toJSON()
-    return { success: true, data: extractedAlbum }
+    return { success: true, data: findAlbum }
 }
 exports.addAlbum = async (request) => {
     const { artist_id, name, year, hidden } = request
@@ -26,7 +25,7 @@ exports.addAlbum = async (request) => {
         return { success: false }
     }
     const album = new Album({
-        name, year, hidden
+        name, year, hidden, artist_id
     })
     await album.save()
     return { success: true }
@@ -40,7 +39,7 @@ exports.updateAlbum = async (album_id, request) => {
     }
     const result = await Album.findOneAndUpdate(
         { album_id },
-        request,
+        { $set: request },
         { new: true }
     )
     return { success: true }
@@ -48,11 +47,10 @@ exports.updateAlbum = async (album_id, request) => {
 
 
 exports.deleteAlbum = async (album_id) => {
-    const findAlbum = await Album.findOne({ album_id })
+    const findAlbum = await Album.findOne({ album_id }).lean()
     if (!findAlbum) {
         return { success: false }
     }
-    const extractedAlbum = findAlbum.toJSON()
     const result = await Album.deleteOne({ album_id })
-    return { success: true, name: extractedAlbum.name }
+    return { success: true, name: findAlbum.name }
 }

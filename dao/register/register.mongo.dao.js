@@ -17,8 +17,8 @@ exports.existingEmail = async (email) => {
 }
 
 exports.getPassword = async (email) => {
-    const user = await User.findOne({ email })
-    return user
+    const user = await User.findOne({ email }).lean()
+    return user.password
 }
 
 exports.emptyCollection = async () => {

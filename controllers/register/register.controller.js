@@ -1,61 +1,38 @@
-const UserMongo = require("../../dao/register/register.mongo.dao")
+const RegisterMongo = require("../../dao/register/register.mongo.dao")
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
+const { responseBody } = require("../../util/responseBody")
+const { response } = require("../../routes/favourites/favourites.route")
 
 exports.logOut = async (req, res) => {
-    const authToken = req.headers.authorization;
-    const existingEmail = await UserMongo.existingEmail(email)
-    const status = !existingEmail ? 200 : 400;
-    const result = {
-        "status": status,
-        "data": null,
-        "message": !existingEmail ? "User logged Out successfully" : "Bad Request",
-        "error": "null"
-    }
-    res.status(status).send(result)
+    return res.status(200).send(responseBody(200, null, "User Logout Successfully", null))
 }
 
 exports.signUp = async (req, res) => {
     try {
         const { email, password, role } = req.body
+        const roles = role.toLowerCase()
         if (!email) {
             throw new Error("Email Id is Required")
         } else if (!password) {
             throw new Error("Password is Required")
         }
-        const existingEmail = await UserMongo.existingEmail(email)
+        const existingEmail = await RegisterMongo.existingEmail(email)
         if (existingEmail) {
-            return res.status(409).send({
-                "status": 409,
-                "data": null,
-                "message": "Email already Exists",
-                "error": null
-            })
+            return res.status(409).send(responseBody(409, null, "Email Already Exists", null))
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        const admin = await UserMongo.emptyCollection()
-        if (!admin && role == 'Admin') {
+        const admin = await RegisterMongo.emptyCollection()
+        if (!admin && roles == 'admin') {
             throw new Error("Admin Cannot be created")
         }
         let result;
         if (admin) {
-            result = await UserMongo.signUp(email, hashedPassword, "Admin")
-        } else {
-            result = await UserMongo.signUp(email, hashedPassword, role)
+            result = await RegisterMongo.signUp(email, hashedPassword, "Admin")
         }
-        res.status(201).send({
-            "status": 201,
-            "data": null,
-            "message": "User created Successfully",
-            "error": null
-        })
+        res.status(201).send(responseBody(201, null, "User created Successfully", null))
     } catch (err) {
-        res.status(400).send({
-            "status": 400,
-            "data": null,
-            "message": `Bad Request,Reason:${err.message}`,
-            "error": "null"
-        })
+        res.status(400).send(responseBody(400, null, `Bad Request,Reason:${err.message}`, null))
     }
 
 }
@@ -63,35 +40,21 @@ exports.signUp = async (req, res) => {
 exports.logIn = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const result = await UserMongo.existingEmail(email)
-        const secret = await UserMongo.getPassword(email)
-        if (!bcrypt.compare(password, secret.password)) {
+        if (!password) {
+            throw new Error("Password is Required")
+        }
+        const result = await RegisterMongo.existingEmail(email)
+        const secret = await RegisterMongo.getPassword(email)
+        if (!(await bcrypt.compare(password, secret))) {
             throw new Error("Password is Invalid")
         }
         if (!result) {
-            res.status(404).send({
-                "status": 404,
-                "data": null,
-                "message": "User not found",
-                "error": null
-            })
+            res.status(404).send(responseBody(404, null, "User Not Found", null))
         }
         const payload = { email, password }
         const authToken = jwt.sign(payload, process.env.SECRET_KEY)
-        res.status(200).send({
-            "status": 200,
-            "data": {
-                "token": authToken
-            },
-            "message": "Login Successful",
-            "error": null
-        })
+        res.status(200).send(responseBody(200, { token: authToken }, "Login Successful", null))
     } catch (err) {
-        res.status(400).send({
-            "status": 400,
-            "data": null,
-            "message": `Bad Request, Reason:${err.message}`,
-            "error": null
-        })
+        res.status(400).send(responseBody(400, null, `Bad Request, Reason:${err.message}`, null))
     }
 }

@@ -52,7 +52,8 @@ exports.updateAlbum = async (req, res) => {
         if (!album_id) {
             throw new Error("Bad Request")
         }
-        const result = await AlbumMongo.updateAlbum(album_id, req.body)
+        const updated = { ...req.body }
+        const result = await AlbumMongo.updateAlbum(album_id, updated)
         if (!result.success) {
             res.status(404).send(responseBody(404, null, "Resource Doesn't Exist", null))
         }

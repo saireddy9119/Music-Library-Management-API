@@ -20,16 +20,16 @@ exports.getUsers = async (req, res) => {
 exports.addUser = async (req, res) => {
     try {
         const { email, password, role } = req.body
+        const roles = role.toLowerCase()
         const existingEmail = await RegisterMongo.existingEmail(email)
         if (existingEmail) {
             res.status(409).send(responseBody(409, null, "Email already exists", null))
         }
-        const admin = await UserMongo.findAdmin(role)
-        if (admin && role === "Admin") {
+        if (roles === "admin") {
             throw new Error("Forbidden Access/Operation not allowed")
         }
         const hashedPassword = await bcrypt.hash(password, 10)
-        const result = await RegisterMongo.signUp(email, hashedPassword, role)
+        const result = await RegisterMongo.signUp(email, hashedPassword, roles)
         res.status(201).send(
             responseBody(201, null, "User created Successfully", null)
         )
@@ -58,17 +58,11 @@ exports.updatePassword = async (req, res) => {
         const { old_password, new_password } = req.body
         const hashedPassword = await bcrypt.hash(old_password, 10)
         const hashedNewPassword = await bcrypt.hash(new_password, 10)
-        const findPassword = await UserMongo.findPassword(hashedPassword, hashedNewPassword)
-        if (!findPassword) {
+        const { email } = req
+        const updatePassword = await UserMongo.updatePassword(email, hashedNewPassword)
+        if (!updatePassword) {
             throw new Error("User Not Found")
         }
-        const filter = await Promise.all(findPassword.map(async (item) => {
-            const isMatch = await bcrypt.compare(old_password, item.password);
-            return isMatch ? item : null;
-        }));
-        const filteredItems = filter.filter(item => item !== null);
-        const email = filteredItems[0].email
-        const updatePassword = await UserMongo.updatePassword(email, hashedNewPassword)
         return res.status(204).send("")
     } catch (e) {
         res.status(404).send(responseBody(404, null, e.message, null))
