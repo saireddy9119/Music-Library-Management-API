@@ -22,6 +22,6 @@ exports.getPassword = async (email) => {
 }
 
 exports.emptyCollection = async () => {
-    const user = await User.find()
+    const user = await User.find({ role: 'admin' }).lean()
     return user.length == 0 ? true : false
 }

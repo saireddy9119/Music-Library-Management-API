@@ -10,8 +10,7 @@ exports.logOut = async (req, res) => {
 
 exports.signUp = async (req, res) => {
     try {
-        const { email, password, role } = req.body
-        const roles = role.toLowerCase()
+        const { email, password } = req.body
         if (!email) {
             throw new Error("Email Id is Required")
         } else if (!password) {
@@ -23,13 +22,10 @@ exports.signUp = async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const admin = await RegisterMongo.emptyCollection()
-        if (!admin && roles == 'admin') {
-            throw new Error("Admin Cannot be created")
+        if (!admin) {
+            throw new Error("Admin Already Created")
         }
-        let result;
-        if (admin) {
-            result = await RegisterMongo.signUp(email, hashedPassword, "Admin")
-        }
+        const result = await RegisterMongo.signUp(email, hashedPassword, "admin")
         res.status(201).send(responseBody(201, null, "User created Successfully", null))
     } catch (err) {
         res.status(400).send(responseBody(400, null, `Bad Request,Reason:${err.message}`, null))
