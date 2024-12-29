@@ -9,7 +9,7 @@ app.use(express.json());
 app.use("/api/v1", require("./routes/index.route"))
 
 connectDB().then(() => {
-    console.log("Database connections established")
+    console.log("Database connection established")
     app.listen(port, () => {
         console.log("Server is Running on port 8081")
     })
