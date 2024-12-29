@@ -2,7 +2,7 @@ const User = require("../../models/users/user.model")
 
 exports.getUsers = async (limit, offset, role) => {
     const query = role ? { role } : {}
-    const findUsers = await User.find(query).select("-_id -__v -updatedAt").limit(limit).skip(offset).lean()
+    const findUsers = await User.find(query).select("-_id -__v -updatedAt -password").limit(limit).skip(offset).lean()
     if (findUsers.length == 0) {
         return { success: false }
     }
