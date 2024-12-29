@@ -20,6 +20,9 @@ exports.getUsers = async (req, res) => {
 exports.addUser = async (req, res) => {
     try {
         const { email, password, role } = req.body
+        if (!email || !password || !role) {
+            throw new Error("Bad Request")
+        }
         const roles = role.toLowerCase()
         const existingEmail = await RegisterMongo.existingEmail(email)
         if (existingEmail) {
@@ -34,6 +37,9 @@ exports.addUser = async (req, res) => {
             responseBody(201, null, "User created Successfully", null)
         )
     } catch (e) {
+        if (e.message == "Bad Request") {
+            return res.status(400).send(responseBody(400, null, e.message, null))
+        }
         res.status(403).send(responseBody(403, null, e.message, null))
     }
 }
